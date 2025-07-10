@@ -1,6 +1,7 @@
 import requests, json
 from pprint import pprint
 import pandas as pd
+from tabulate import tabulate
 
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)
@@ -45,5 +46,21 @@ players_no_managers = players[players['position'] != 'Manager']
 # Sort filtered players by selected_by_percent descending
 players_sorted = players_no_managers.sort_values(by='selected_by_percent', ascending=False)
 
-print(players_sorted[['id', 'first_name', 'second_name', 'team_name', 'position',
-                      'cost_million', 'selected_by_percent', 'form', 'total_points']].to_string(index=False, col_space=15))
+players_sorted_renamed = players_sorted.rename(columns={
+    'id': 'Player ID',
+    'first_name': 'First Name',
+    'second_name': 'Last Name',
+    'team_name': 'Team',
+    'position': 'Position',
+    'cost_million': 'Cost (Million £)',
+    'selected_by_percent': 'Selected By (%)',
+    'form': 'Form',
+    'total_points': 'Total Points'
+})
+
+print(tabulate(
+    players_sorted_renamed[['Player ID', 'First Name', 'Last Name', 'Team', 'Position',
+                           'Cost (Million £)', 'Selected By (%)', 'Form', 'Total Points']],
+    headers='keys',
+    tablefmt='fancy_grid'
+))
