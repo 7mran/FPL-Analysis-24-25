@@ -44,7 +44,7 @@ players['form'] = players['form'].astype(float)
 players_no_managers = players[players['position'] != 'Manager']
 
 # Sort filtered players by selected_by_percent descending
-players_sorted = players_no_managers.sort_values(by='selected_by_percent', ascending=False)
+players_sorted = players_no_managers.sort_values(by='total_points', ascending=False)
 
 players_sorted_renamed = players_sorted.rename(columns={
     'id': 'Player ID',
@@ -58,9 +58,46 @@ players_sorted_renamed = players_sorted.rename(columns={
     'total_points': 'Total Points'
 })
 
-print(tabulate(
-    players_sorted_renamed[['Player ID', 'First Name', 'Last Name', 'Team', 'Position',
-                           'Cost (Million £)', 'Selected By (%)', 'Form', 'Total Points']],
-    headers='keys',
-    tablefmt='fancy_grid'
-))
+#print(tabulate(
+#    players_sorted_renamed[['Player ID', 'First Name', 'Last Name', 'Team', 'Position',
+ #                          'Cost (Million £)', 'Selected By (%)', 'Form', 'Total Points']],
+ #   headers='keys',
+  #  tablefmt='fancy_grid'
+#))
+
+# Define function to fetch gameweek history
+def get_gameweek_history(player_id):
+    '''Get all gameweek info for a given player_id'''
+    r = requests.get(base_url + f'element-summary/{player_id}/').json()
+    df = pd.json_normalize(r['history'])
+    return df
+
+# Ask user to pick a player by ID or name (or hardcode for now)
+# For example, let's choose the top player from the sorted list:
+top_player = players_sorted_renamed.iloc[0]
+top_player_id = top_player['Player ID']
+first_name = top_player['First Name']
+last_name = top_player['Last Name']
+
+print(f"\nShowing Gameweek history for {first_name} {last_name} (ID: {top_player_id})\n")
+
+# Get and show gameweek history
+gameweek_history = get_gameweek_history(top_player_id)
+
+# Optional: map opponent_team ID to team name
+gameweek_history['Opponent'] = gameweek_history['opponent_team'].map(team_map)
+
+# Show these columns only
+columns_to_show = [
+    'round',              # Gameweek number
+    'Opponent',
+    'was_home',
+    'minutes',
+    'goals_scored',
+    'assists',
+    'clean_sheets',
+    'total_points'
+]
+
+# Pretty print with tabulate
+print(tabulate(gameweek_history[columns_to_show], headers='keys', tablefmt='fancy_grid'))
